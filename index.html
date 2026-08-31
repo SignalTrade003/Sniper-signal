@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ SNIPER SIGNAL ⚡ - Binance Realtime</title>
+
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --text-color: #eaecef;
+            --card-bg: #181a20;
+            --box-bg: #2b313a;
+            --chart-bg: #161a1e;
+            --border-color: #363c4e;
+            --sub-text: #848e9c;
+        }
+
+        /* 💡 ຮອງຮັບ Light Mode */
+        body.light-mode {
+            --bg-color: #f0f2f5;
+            --text-color: #1e2329;
+            --card-bg: #ffffff;
+            --box-bg: #e6e8ea;
+            --chart-bg: #f8f9fa;
+            --border-color: #d0d5dd;
+            --sub-text: #475467;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Trebuchet MS', Roboto, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* 🔘 ປຸ່ມສະຫຼັບ Theme (ດຳ - ຂາວ) */
+        .theme-toggle-btn {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid #f0b90b;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f0b90b;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        /* ⚡ Card Container ພ້ອມ Effect ໄຟແລ່ນອ້ອມກ່ອງ ⚡ */
+        .app-card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        /* Border Glowing Layer */
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent, 
+                #f0b90b, 
+                #0ecb81, 
+                #00bfff, 
+                #f6465d, 
+                transparent 30%
+            );
+            animation: rotateCardLighting 4s linear infinite;
+            z-index: -2;
+        }
+
+        /* Inner mask background */
+        .app-card::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--card-bg);
+            border-radius: 14px;
+            z-index: -1;
+            transition: background 0.3s ease;
+        }
+
+        @keyframes rotateCardLighting {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 🖥️ Fullscreen Mode Styling */
+        .app-card.fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            border-radius: 0 !important;
+            padding: 20px !important;
+            justify-content: space-between;
+        }
+
+        .app-card.fullscreen::after {
+            border-radius: 0 !important;
+        }
+
+        .app-card.fullscreen .chart-container {
+            flex-grow: 1;
+            height: auto !important;
+            margin-bottom: 15px;
+        }
+
+        .fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+        .fullscreen-btn:hover {
+            background: #f0b90b;
+            color: #0b0e11;
+        }
+        
+        /* Timeframe Selector Buttons */
+        .tf-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            margin-bottom: 8px;
+            padding-right: 30px; /* space for fullscreen button */
+        }
+        .tf-btn {
+            background: var(--box-bg);
+            color: var(--sub-text);
+            border: 1px solid var(--border-color);
+            padding: 3px 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tf-btn:hover {
+            color: var(--text-color);
+            background: var(--border-color);
+        }
+        .tf-btn.active {
+            background: #f0b90b;
+            color: #0b0e11;
+            border-color: #f0b90b;
+        }
+
+        /* Canvas Chart Area */
+        .chart-container {
+            width: 100%;
+            height: 180px;
+            margin-bottom: 12px;
+            background-color: var(--chart-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        .chart-container canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Signal Circle Styles */
+        .signal-circle-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 5px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ⚡ Lightning Effects Around Signal Circle */
+        .lightning-effect {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            right: -12px;
+            bottom: -12px;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        
+        .signal-circle-container.buy .lightning-effect {
+            opacity: 1;
+            border: 2px dashed #0ecb81;
+            box-shadow: 0 0 15px #0ecb81, inset 0 0 15px #0ecb81;
+            animation: lightningRotate 2s linear infinite, lightningPulseBuy 0.6s infinite alternate;
+        }
+
+        .signal-circle-container.sell .lightning-effect {
+            opacity: 1;
+            border: 2px dashed #f6465d;
+            box-shadow: 0 0 15px #f6465d, inset 0 0 15px #f6465d;
+            animation: lightningRotate 2s linear infinite, lightningPulseSell 0.6s infinite alternate;
+        }
+
+        .signal-circle-container.wait .lightning-effect {
+            opacity: 1;
+            border: 2px dashed #00bfff;
+            box-shadow: 0 0 12px #00bfff, inset 0 0 12px #00bfff;
+            animation: lightningRotate 3s linear infinite, lightningPulseWait 1s infinite alternate;
+        }
+
+        .signal-circle-container.analyzing .lightning-effect {
+            opacity: 1;
+            border: 2px dashed #f0b90b;
+            box-shadow: 0 0 15px #f0b90b, inset 0 0 15px #f0b90b;
+            animation: lightningRotate 1.5s linear infinite, lightningPulseAnalyzing 0.5s infinite alternate;
+        }
+
+        .lightning-icon {
+            position: absolute;
+            font-size: 1.2rem;
+            opacity: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+        .lightning-icon.top-left { top: 2px; left: 6px; }
+        .lightning-icon.top-right { top: 2px; right: 6px; }
+        .lightning-icon.bottom-left { bottom: 2px; left: 6px; }
+        .lightning-icon.bottom-right { bottom: 2px; right: 6px; }
+
+        .signal-circle-container.buy .lightning-icon,
+        .signal-circle-container.sell .lightning-icon,
+        .signal-circle-container.wait .lightning-icon,
+        .signal-circle-container.analyzing .lightning-icon {
+            opacity: 1;
+            animation: flashLightning 0.4s infinite alternate ease-in-out;
+        }
+
+        @keyframes lightningRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes lightningPulseBuy {
+            0% { box-shadow: 0 0 10px #0ecb81, inset 0 0 8px #0ecb81; filter: drop-shadow(0 0 2px #fff); }
+            100% { box-shadow: 0 0 25px #0ecb81, 0 0 35px #047857, inset 0 0 20px #0ecb81; filter: drop-shadow(0 0 8px #fff); }
+        }
+
+        @keyframes lightningPulseSell {
+            0% { box-shadow: 0 0 10px #f6465d, inset 0 0 8px #f6465d; filter: drop-shadow(0 0 2px #f6465d); }
+            100% { box-shadow: 0 0 25px #f6465d, 0 0 35px #b91c1c, inset 0 0 20px #f6465d; filter: drop-shadow(0 0 8px #fff); }
+        }
+
+        @keyframes lightningPulseWait {
+            0% { box-shadow: 0 0 8px #00bfff, inset 0 0 6px #00bfff; filter: drop-shadow(0 0 2px #848e9c); }
+            100% { box-shadow: 0 0 20px #00bfff, 0 0 28px #1e3a8a, inset 0 0 15px #00bfff; filter: drop-shadow(0 0 6px #fff); }
+        }
+
+        @keyframes lightningPulseAnalyzing {
+            0% { box-shadow: 0 0 10px #f0b90b, inset 0 0 8px #f0b90b; filter: drop-shadow(0 0 2px #fff); }
+            100% { box-shadow: 0 0 25px #f0b90b, 0 0 35px #d97706, inset 0 0 20px #f0b90b; filter: drop-shadow(0 0 8px #fff); }
+        }
+
+        @keyframes flashLightning {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .signal-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 2;
+            padding: 4px;
+            color: #ffffff;
+        }
+        .signal-circle.sell {
+            background: radial-gradient(circle, #f6465d 0%, #b91c1c 100%);
+            box-shadow: 0 0 25px rgba(246, 70, 93, 0.6);
+        }
+        .signal-circle.buy {
+            background: radial-gradient(circle, #0ecb81 0%, #047857 100%);
+            box-shadow: 0 0 25px rgba(14, 203, 129, 0.6);
+        }
+        .signal-circle.wait {
+            background: radial-gradient(circle, #474d57 0%, #2b313a 100%);
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.4);
+        }
+        .signal-circle.analyzing {
+            background: radial-gradient(circle, #f0b90b 0%, #b45309 100%);
+            box-shadow: 0 0 25px rgba(240, 185, 11, 0.6);
+            color: #0b0e11;
+        }
+
+        /* Arrow Animations */
+        .arrow {
+            font-size: 1.8rem;
+            line-height: 1;
+            font-weight: 900;
+        }
+        .signal-circle.buy .arrow {
+            animation: moveUp 0.8s infinite alternate ease-in-out;
+        }
+        .signal-circle.sell .arrow {
+            animation: moveDown 0.8s infinite alternate ease-in-out;
+        }
+        .signal-circle.wait .arrow,
+        .signal-circle.analyzing .arrow {
+            animation: rotateHourglass 2s infinite linear;
+        }
+
+        @keyframes moveUp {
+            0% { transform: translateY(3px); }
+            100% { transform: translateY(-4px); }
+        }
+        @keyframes moveDown {
+            0% { transform: translateY(-3px); }
+            100% { transform: translateY(4px); }
+        }
+        @keyframes rotateHourglass {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .action-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .action-text.analyzing {
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Sub Status */
+        .sub-status {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            min-height: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+        .sub-status.sell { color: #f6465d; }
+        .sub-status.buy { color: #0ecb81; }
+        .sub-status.wait { color: #00bfff; }
+        .sub-status.analyzing { color: #f0b90b; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .stat-box {
+            background: var(--box-bg);
+            border-radius: 8px;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 1px solid #ff4500;
+            animation: fireGlowEffect 1.2s infinite alternate ease-in-out;
+            transition: background 0.3s ease;
+        }
+
+        @keyframes fireGlowEffect {
+            0% {
+                box-shadow: 0 0 5px #ff4500, inset 0 0 4px #ff4500;
+                border-color: #ff4500;
+            }
+            50% {
+                box-shadow: 0 0 12px #ff8c00, inset 0 0 8px #ff8c00;
+                border-color: #ff8c00;
+            }
+            100% {
+                box-shadow: 0 0 18px #ff0000, inset 0 0 12px #ff0000;
+                border-color: #ff0000;
+            }
+        }
+
+        .stat-icon {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--sub-text);
+            margin-bottom: 2px;
+        }
+        .stat-value {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        /* Asset Box */
+        .asset-card {
+            background: var(--box-bg);
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .asset-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .asset-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        .asset-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: left;
+        }
+        .asset-price {
+            font-size: 0.75rem;
+            color: #f0b90b;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .fire-badge {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .fire-sticker {
+            display: inline-block;
+            animation: firePulseSticker 0.6s infinite alternate ease-in-out;
+            filter: drop-shadow(0 0 6px #ff4500);
+        }
+
+        @keyframes firePulseSticker {
+            0% {
+                transform: scale(1) translateY(0);
+                filter: drop-shadow(0 0 3px #ff4500);
+            }
+            100% {
+                transform: scale(1.3) translateY(-2px);
+                filter: drop-shadow(0 0 10px #ff0000);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🔘 ປຸ່ມສະຫຼັບໂໝດ ຂາວ - ດຳ -->
+<button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">☀️ Light Mode</button>
+
+<div class="header-title">⚡ SNIPER SIGNAL ⚡</div>
+
+<div class="grid-container" id="cards-container"></div>
+
+<script>
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeBtn');
+        body.classList.toggle('light-mode');
+        
+        if (body.classList.contains('light-mode')) {
+            btn.innerText = '🌙 Dark Mode';
+        } else {
+            btn.innerText = '☀️ Light Mode';
+        }
+        refreshBinanceData();
+    }
+
+    /* 🖥️ Function ຢ່າງເຕັມໜ້າຈໍ / ອອກຈາກເຕັມໜ້າຈໍ */
+    function toggleFullScreen(pairId, btn) {
+        const card = document.getElementById(`card-${pairId}`);
+        const isFullscreen = card.classList.toggle('fullscreen');
+        
+        if (isFullscreen) {
+            btn.innerText = '❌ Close';
+        } else {
+            btn.innerText = '🖥️ Full';
+        }
+
+        // ວາດກາຟໃໝ່ໃຫ້ພໍດີກັບຂະໜາດຈໍໃໝ່
+        const config = pairsConfig.find(p => p.pairId === pairId);
+        if (config) {
+            fetchBinanceKlines(pairId, config.symbol);
+        }
+    }
+
+    const cryptoIcons = {
+        BTC: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><path d="M23.18 13.01c.32-2.12-1.3-3.26-3.51-4.02l.72-2.88-1.75-.44-.7 2.8c-.46-.11-.93-.22-1.4-.33l.71-2.83-1.75-.44-.72 2.88c-.38-.09-.76-.17-1.13-.26l-2.42-.6-.47 1.88s1.3.3 1.27.32c.71.18.84.65.82 1.03l-.82 3.29c.05.01.11.03.18.06l-.18-.04-1.15 4.61c-.09.22-.31.55-.81.42.02.03-1.27-.32-1.27-.32l-.88 2.02 2.28.57c.42.11.84.22 1.25.32l-.73 2.92 1.75.44.72-2.89c.48.13.94.25 1.4.36l-.72 2.87 1.75.44.73-2.91c2.98.56 5.22.34 6.16-2.36.76-2.17-.04-3.42-1.61-4.23 1.15-.26 2.01-1.02 2.24-2.58zm-4.01 5.62c-.54 2.17-4.2 1-5.38.7l.96-3.85c1.18.3 4.97.89 4.42 3.15zm.54-5.65c-.49 1.98-3.55.98-4.54.73l.87-3.49c.99.25 4.18.72 3.67 2.76z" fill="#FFF"/></svg>`,
+        ETH: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#627EEA"/><g fill="#FFF"><path fill-opacity=".6" d="M16 4v9.53l8 3.58z"/><path d="M16 4L8 17.11l8-3.58z"/><path fill-opacity=".6" d="M16 21.97v6.03l8-11.08z"/><path d="M16 28V21.97L8 16.92z"/><path fill-opacity=".2" d="M16 20.57l8-4.66-8-3.58z"/><path fill-opacity=".6" d="M8 15.91l8 4.66v-8.24z"/></g></svg>`,
+        BNB: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F3BA2F"/><path d="M12.11 13.91L16 10.02l3.89 3.89 2.28-2.28L16 5.46l-6.17 6.17 2.28 2.28zm-6.17 2.09l2.28-2.28 2.28 2.28-2.28 2.28-2.28-2.28zm6.17 2.09L16 21.98l3.89-3.89 2.28 2.28L16 26.54l-6.17-6.17 2.28-2.28zm13.95-2.09l-2.28-2.28-2.28 2.28 2.28 2.28 2.28-2.28zM16 13.62l2.38 2.38L16 18.38l-2.38-2.38L16 13.62z" fill="#FFF"/></svg>`,
+        SOL: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#14F195"/><path d="M8.8 20.8h14.7c.2 0 .4.1.5.3l1.8 2.2c.2.3.1.7-.2.8H10.9c-.2 0-.4-.1-.5-.3l-1.8-2.2c-.3-.3-.1-.8.2-.8zm0-9.6h14.7c.2 0 .4.1.5.3l1.8 2.2c.2.3.1.7-.2.8H10.9c-.2 0-.4-.1-.5-.3l-1.8-2.2c-.3-.3-.1-.8.2-.8zm14.4 4.8H8.5c-.2 0-.4.1-.5.3l-1.8 2.2c-.2.3-.1.7.2.8h14.7c.2 0 .4-.1.5-.3l1.8-2.2c.3-.3.1-.8-.2-.8z" fill="#000"/></svg>`,
+        TRX: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#FF0013"/><path d="M23.1 9.2L7.3 6.5l10.9 19.3 4.9-16.6zm-13.6.3l10.7 1.8-6 5.8L9.5 9.5z" fill="#FFF"/></svg>`,
+        SUI: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#4DA2FF"/><path d="M16 6s-6 7.5-6 11.5c0 3.31 2.69 6 6 6s6-2.69 6-6C22 13.5 16 6 16 6zm0 15c-1.93 0-3.5-1.57-3.5-3.5 0-1.75 2.1-4.9 3.5-6.7 1.4 1.8 3.5 4.95 3.5 6.7 0 1.93-1.57 3.5-3.5 3.5z" fill="#FFF"/></svg>`,
+        DOGE: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#C2A633"/><path d="M12.5 9h4.8c3.7 0 6.7 2.8 6.7 7s-3 7-6.7 7h-4.8V9zm3.2 3.1v7.8h1.6c2.2 0 3.9-1.6 3.9-3.9 0-2.2-1.7-3.9-3.9-3.9h-1.6zm-5 3.1h5.8v1.6h-5.8v-1.6z" fill="#FFF"/></svg>`,
+        XRP: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#23292F"/><path d="M22.7 8h2.3l-5.8 5.7 5.8 5.8h-2.3l-4.7-4.6-4.7 4.6h-2.3l5.8-5.8L11 8h2.3l4.7 4.6L22.7 8z" fill="#FFF"/></svg>`,
+        GOLD: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#FFD700"/><path d="M9 11h14l-2 10H11L9 11zm7 1.5c-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5-1.6-3.5-3.5-3.5z" fill="#000"/></svg>`,
+        SILVER: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#C0C0C0"/><path d="M9 11h14l-2 10H11L9 11zm7 1.5c-1.9 0-3.5 1.6-3.5 3.5s1.6 3.5 3.5 3.5 3.5-1.6 3.5-3.5-1.6-3.5-3.5-3.5z" fill="#000"/></svg>`
+    };
+
+    const pairsConfig = [
+        { pair: 'BTC/USDT', symbol: 'BTCUSDT', iconKey: 'BTC' },
+        { pair: 'ETH/USDT', symbol: 'ETHUSDT', iconKey: 'ETH' },
+        { pair: 'BNB/USDT', symbol: 'BNBUSDT', iconKey: 'BNB' },
+        { pair: 'SOL/USDT', symbol: 'SOLUSDT', iconKey: 'SOL' },
+        { pair: 'TRX/USDT', symbol: 'TRXUSDT', iconKey: 'TRX' },
+        { pair: 'SUI/USDT', symbol: 'SUIUSDT', iconKey: 'SUI' },
+        { pair: 'DOGE/USDT', symbol: 'DOGEUSDT', iconKey: 'DOGE' },
+        { pair: 'XRP/USDT', symbol: 'XRPUSDT', iconKey: 'XRP' },
+        { pair: 'GOLD/USDT', symbol: 'PAXGUSDT', iconKey: 'GOLD' },
+        { pair: 'SILVER/USDT', symbol: 'BTCUSDT', iconKey: 'SILVER' }
+    ];
+
+    const fixedOffsets = {
+        'pair-0': 26,  // BTC/USDT
+        'pair-1': 20,  // ETH/USDT
+        'pair-2': 0,   // BNB/USDT
+        'pair-3': -9,  // SOL/USDT
+        'pair-4': -17, // TRX/USDT
+        'pair-5': -11, // SUI/USDT
+        'pair-6': -50, // DOGE/USDT
+        'pair-7': 5,   // XRP/USDT
+        'pair-8': 28,  // GOLD/USDT
+        'pair-9': 25   // SILVER/USDT
+    };
+
+    const selectedTimeframes = {};
+    const timeframes = ['30s', '1m', '5m', '15m', '1h'];
+    const cardTimers = {};
+
+    const container = document.getElementById('cards-container');
+
+    function calculatePhaseAndTimer(offset) {
+        const now = Math.floor(Date.now() / 1000) + offset;
+        const secondInMinute = now % 60;
+        
+        let phase = 'wait';
+        let timeLeft = 30;
+
+        if (secondInMinute < 30) {
+            phase = 'wait';
+            timeLeft = 30 - secondInMinute;
+        } else {
+            const cycleSec = secondInMinute - 30;
+            timeLeft = 30 - cycleSec;
+
+            if (cycleSec < 20) {
+                phase = 'countdown';
+            } else {
+                phase = 'signal';
+            }
+        }
+
+        return { timeLeft, phase };
+    }
+
+    pairsConfig.forEach((item, index) => {
+        const pairId = `pair-${index}`;
+        item.pairId = pairId;
+        selectedTimeframes[pairId] = '30s';
+        const initialOffset = fixedOffsets[pairId] !== undefined ? fixedOffsets[pairId] : 0;
+
+        const { timeLeft, phase } = calculatePhaseAndTimer(initialOffset);
+
+        cardTimers[pairId] = {
+            timeLeft: timeLeft,
+            phase: phase,
+            offset: initialOffset
+        };
+
+        const tfButtonsHtml = timeframes.map(tf => 
+            `<button class="tf-btn ${tf === '30s' ? 'active' : ''}" onclick="changeTimeframe('${pairId}', '${item.symbol}', '${tf}', this)">${tf}</button>`
+        ).join('');
+
+        const initialActionText = phase === 'signal' ? 'BUY' : (phase === 'countdown' ? 'ANALYZING...' : 'WAIT');
+
+        const cardHtml = `
+            <div class="app-card" id="card-${pairId}">
+                <button class="fullscreen-btn" onclick="toggleFullScreen('${pairId}', this)">🖥️ Full</button>
+                <div class="tf-container">${tfButtonsHtml}</div>
+                <div class="chart-container"><canvas id="canvas-${pairId}"></canvas></div>
+
+                <div class="signal-circle-container ${phase === 'signal' ? 'buy' : (phase === 'countdown' ? 'analyzing' : 'wait')}" id="circle-container-${pairId}">
+                    <div class="lightning-effect"></div>
+                    <span class="lightning-icon top-left">⚡</span>
+                    <span class="lightning-icon top-right">⚡</span>
+                    <span class="lightning-icon bottom-left">⚡</span>
+                    <span class="lightning-icon bottom-right">⚡</span>
+                    
+                    <div class="signal-circle ${phase === 'signal' ? 'buy' : (phase === 'countdown' ? 'analyzing' : 'wait')}" id="circle-${pairId}">
+                        <div class="arrow" id="arrow-${pairId}">${phase === 'signal' ? '↑' : '⏳'}</div>
+                        <div class="action-text ${phase === 'countdown' ? 'analyzing' : ''}" id="action-${pairId}">${initialActionText}</div>
+                    </div>
+                </div>
+
+                <div class="sub-status ${phase === 'signal' ? 'buy' : (phase === 'countdown' ? 'analyzing' : 'wait')}" id="sub-${pairId}">
+                    ${phase === 'signal' ? 'BUY Signal Active' : (phase === 'countdown' ? 'ANALYZING...' : 'WAIT FOR RESULT')}
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-label">Timer</div>
+                        <div class="stat-value" id="timer-${pairId}">${timeLeft}s</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-label">Phase</div>
+                        <div class="stat-value" id="phase-${pairId}">${phase === 'signal' ? 'SIGNAL' : (phase === 'countdown' ? 'ANALYZING' : 'WAITING')}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value" id="conf-${pairId}">${phase === 'signal' ? '88%' : '--'}</div>
+                    </div>
+                </div>
+
+                <div class="asset-card">
+                    <div class="asset-info">
+                        <div class="asset-icon">${cryptoIcons[item.iconKey]}</div>
+                        <div>
+                            <div class="asset-name">${item.pair}</div>
+                            <div class="asset-price" id="price-${pairId}">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="fire-badge"><span class="fire-sticker">🔥</span></div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', cardHtml);
+
+        if (phase === 'signal') {
+            setSignalState(pairId);
+        } else if (phase === 'countdown') {
+            setCountdownState(pairId);
+        } else {
+            setWaitState(pairId);
+        }
+    });
+
+    function changeTimeframe(pairId, symbol, timeframe, btnEl) {
+        selectedTimeframes[pairId] = timeframe;
+        const parent = btnEl.parentElement;
+        parent.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+        fetchBinanceKlines(pairId, symbol);
+    }
+
+    function drawCandlesticks(canvasId, candles) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        if (!candles || candles.length === 0) return;
+        let minPrice = Math.min(...candles.map(c => c.low));
+        let maxPrice = Math.max(...candles.map(c => c.high));
+        if (minPrice === maxPrice) { minPrice -= 1; maxPrice += 1; }
+
+        const padding = 25;
+        const chartHeight = height - (padding * 2);
+        const getY = (price) => height - padding - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+        const candleCount = candles.length;
+        const candleWidth = Math.max((width / candleCount) - 3, 2);
+
+        candles.forEach((candle, index) => {
+            const x = (index * (width / candleCount)) + (width / candleCount) / 2;
+            const openY = getY(candle.open);
+            const closeY = getY(candle.close);
+            const highY = getY(candle.high);
+            const lowY = getY(candle.low);
+            const isUp = candle.close >= candle.open;
+            const color = isUp ? '#0ecb81' : '#f6465d';
+
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.moveTo(x, highY);
+            ctx.lineTo(x, lowY);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, Math.max(Math.abs(closeY - openY), 1));
+        });
+
+        const lastCandle = candles[candles.length - 1];
+        const lastPrice = lastCandle.close;
+        const lastY = getY(lastPrice);
+        const isUp = lastCandle.close >= lastCandle.open;
+        const priceColor = isUp ? '#0ecb81' : '#f6465d';
+        const formattedPrice = `$${lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+        ctx.beginPath();
+        ctx.strokeStyle = priceColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.moveTo(0, lastY);
+        ctx.lineTo(width, lastY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = 'bold 10px sans-serif';
+        const textWidth = ctx.measureText(formattedPrice).width;
+        const tagPadding = 4;
+        const tagWidth = textWidth + tagPadding * 2;
+        const tagHeight = 16;
+        const tagX = width - tagWidth - 5;
+        const tagY = Math.min(Math.max(lastY - tagHeight / 2, 2), height - tagHeight - 2);
+
+        ctx.fillStyle = priceColor;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(tagX, tagY, tagWidth, tagHeight, 3) : ctx.rect(tagX, tagY, tagWidth, tagHeight);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(formattedPrice, tagX + tagPadding, tagY + 12);
+
+        const isLight = document.body.classList.contains('light-mode');
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = isLight ? '#475467' : '#848e9c';
+        ctx.fillText(`H: $${maxPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 6, 14);
+        ctx.fillText(`L: $${minPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 6, height - 6);
+    }
+
+    function aggregateTo30s(klines1s) {
+        const candles30s = [];
+        for (let i = 0; i < klines1s.length; i += 30) {
+            const chunk = klines1s.slice(i, i + 30);
+            if (chunk.length === 0) continue;
+            candles30s.push({
+                open: parseFloat(chunk[0][1]),
+                high: Math.max(...chunk.map(d => parseFloat(d[2]))),
+                low: Math.min(...chunk.map(d => parseFloat(d[3]))),
+                close: parseFloat(chunk[chunk.length - 1][4])
+            });
+        }
+        return candles30s;
+    }
+
+    async function fetchBinanceKlines(pairId, symbol) {
+        try {
+            const tf = selectedTimeframes[pairId] || '30s';
+            let formattedData = [];
+            if (tf === '30s') {
+                const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1s&limit=600`);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) formattedData = aggregateTo30s(data);
+            } else {
+                const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${tf}&limit=25`);
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    formattedData = data.map(d => ({ open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]) }));
+                }
+            }
+            if (formattedData.length > 0) {
+                drawCandlesticks(`canvas-${pairId}`, formattedData);
+                document.getElementById(`price-${pairId}`).innerText = `$${formattedData[formattedData.length - 1].close.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+            }
+        } catch (error) {
+            console.error(`Failed to fetch Binance data`, error);
+        }
+    }
+
+    function refreshBinanceData() {
+        pairsConfig.forEach((item, index) => fetchBinanceKlines(`pair-${index}`, item.symbol));
+    }
+    setInterval(refreshBinanceData, 2000);
+
+    function setSignalState(pairId) {
+        const containerEl = document.getElementById(`circle-container-${pairId}`);
+        const circle = document.getElementById(`circle-${pairId}`);
+        const arrow = document.getElementById(`arrow-${pairId}`);
+        const action = document.getElementById(`action-${pairId}`);
+        const sub = document.getElementById(`sub-${pairId}`);
+        const conf = document.getElementById(`conf-${pairId}`);
+
+        const isBuy = Math.random() > 0.5;
+        const confidenceVal = Math.floor(Math.random() * (95 - 78 + 1)) + 78;
+        conf.innerText = confidenceVal + '%';
+
+        action.classList.remove('analyzing');
+
+        if (isBuy) {
+            containerEl.className = 'signal-circle-container buy';
+            circle.className = 'signal-circle buy';
+            arrow.innerText = '↑';
+            action.innerText = 'BUY';
+            sub.innerText = 'BUY Signal Active';
+            sub.className = 'sub-status buy';
+        } else {
+            containerEl.className = 'signal-circle-container sell';
+            circle.className = 'signal-circle sell';
+            arrow.innerText = '↓';
+            action.innerText = 'SELL';
+            sub.innerText = 'SELL Signal Active';
+            sub.className = 'sub-status sell';
+        }
+    }
+
+    function setCountdownState(pairId) {
+        const containerEl = document.getElementById(`circle-container-${pairId}`);
+        const circle = document.getElementById(`circle-${pairId}`);
+        const arrow = document.getElementById(`arrow-${pairId}`);
+        const action = document.getElementById(`action-${pairId}`);
+        const sub = document.getElementById(`sub-${pairId}`);
+        const conf = document.getElementById(`conf-${pairId}`);
+
+        containerEl.className = 'signal-circle-container analyzing';
+        circle.className = 'signal-circle analyzing';
+        arrow.innerText = '⏳';
+        action.innerText = 'ANALYZING...';
+        action.classList.add('analyzing');
+        sub.innerText = 'ANALYZING...';
+        sub.className = 'sub-status analyzing';
+        conf.innerText = '--';
+    }
+
+    function setWaitState(pairId) {
+        const containerEl = document.getElementById(`circle-container-${pairId}`);
+        const circle = document.getElementById(`circle-${pairId}`);
+        const arrow = document.getElementById(`arrow-${pairId}`);
+        const action = document.getElementById(`action-${pairId}`);
+        const sub = document.getElementById(`sub-${pairId}`);
+        const conf = document.getElementById(`conf-${pairId}`);
+
+        containerEl.className = 'signal-circle-container wait';
+        circle.className = 'signal-circle wait';
+        arrow.innerText = '⏳';
+        action.innerText = 'WAIT';
+        action.classList.remove('analyzing');
+        sub.innerText = 'WAIT FOR RESULT';
+        sub.className = 'sub-status wait';
+        conf.innerText = '--';
+    }
+
+    setInterval(() => {
+        pairsConfig.forEach((_, index) => {
+            const pairId = `pair-${index}`;
+            const state = cardTimers[pairId];
+            if (!state) return;
+
+            const { timeLeft: newTimeLeft, phase: newPhase } = calculatePhaseAndTimer(state.offset);
+
+            state.timeLeft = newTimeLeft;
+
+            if (state.phase !== newPhase) {
+                state.phase = newPhase;
+                if (newPhase === 'signal') {
+                    document.getElementById(`phase-${pairId}`).innerText = 'SIGNAL';
+                    setSignalState(pairId);
+                } else if (newPhase === 'countdown') {
+                    document.getElementById(`phase-${pairId}`).innerText = 'ANALYZING';
+                    setCountdownState(pairId);
+                } else {
+                    document.getElementById(`phase-${pairId}`).innerText = 'WAITING';
+                    setWaitState(pairId);
+                }
+            }
+
+            const timerEl = document.getElementById(`timer-${pairId}`);
+            if (timerEl) timerEl.innerText = state.timeLeft + 's';
+        });
+    }, 1000);
+
+    // ປັບຂະໜາດ chart ຖ້າມີການປ່ຽນຂະໜາດ window
+    window.onresize = () => {
+        refreshBinanceData();
+    };
+
+    window.onload = () => {
+        refreshBinanceData();
+    };
+</script>
+
+</body>
+</html>
