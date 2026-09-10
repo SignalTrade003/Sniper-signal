@@ -424,7 +424,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .stat-box {
@@ -469,6 +469,69 @@
             font-size: 0.85rem;
             font-weight: bold;
             color: var(--text-color);
+        }
+
+        /* ⏱️ Sync Time Controls */
+        .sync-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px 8px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .sync-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--sub-text);
+        }
+        .sync-btn-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .sync-btn {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        .sync-btn:hover {
+            background: #f0b90b;
+            color: #0b0e11;
+        }
+        .sync-val {
+            font-size: 0.8rem;
+            font-weight: bold;
+            min-width: 32px;
+            text-align: center;
+            color: #f0b90b;
+        }
+        .save-btn {
+            background: #0ecb81;
+            color: #ffffff;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .save-btn:hover {
+            background: #047857;
         }
 
         /* Asset Box */
@@ -608,7 +671,7 @@
         { pair: 'SILVER/USDT', symbol: 'BTCUSDT', iconKey: 'SILVER' }
     ];
 
-    const fixedOffsets = {
+    const defaultOffsets = {
         'pair-0': 25,  // BTC/USDT
         'pair-1': 19,  // ETH/USDT
         'pair-2': 0,   // BNB/USDT
@@ -629,7 +692,7 @@
 
     function calculatePhaseAndTimer(offset) {
         const now = Math.floor(Date.now() / 1000) + offset;
-        const secondInMinute = now % 60;
+        const secondInMinute = ((now % 60) + 60) % 60;
         
         let phase = 'wait';
         let timeLeft = 30;
@@ -651,11 +714,20 @@
         return { timeLeft, phase };
     }
 
+    /* 💾 ດຶງຄ່າ Offset ຈາກ LocalStorage ຫຼືໃຊ້ຄ່າ Default */
+    function getSavedOffset(pairId) {
+        const saved = localStorage.getItem(`sync_offset_${pairId}`);
+        if (saved !== null) {
+            return parseInt(saved, 10);
+        }
+        return defaultOffsets[pairId] !== undefined ? defaultOffsets[pairId] : 0;
+    }
+
     pairsConfig.forEach((item, index) => {
         const pairId = `pair-${index}`;
         item.pairId = pairId;
         selectedTimeframes[pairId] = '30s';
-        const initialOffset = fixedOffsets[pairId] !== undefined ? fixedOffsets[pairId] : 0;
+        const initialOffset = getSavedOffset(pairId);
 
         const { timeLeft, phase } = calculatePhaseAndTimer(initialOffset);
 
@@ -712,6 +784,17 @@
                     </div>
                 </div>
 
+                <!-- ⏱️ Sync Time Control Bar -->
+                <div class="sync-controls">
+                    <span class="sync-label">Sync Time:</span>
+                    <div class="sync-btn-group">
+                        <button class="sync-btn" onclick="adjustOffset('${pairId}', -1)">-</button>
+                        <span class="sync-val" id="sync-val-${pairId}">${initialOffset > 0 ? '+' : ''}${initialOffset}s</span>
+                        <button class="sync-btn" onclick="adjustOffset('${pairId}', 1)">+</button>
+                        <button class="save-btn" onclick="saveOffset('${pairId}')">💾 Save</button>
+                    </div>
+                </div>
+
                 <div class="asset-card">
                     <div class="asset-info">
                         <div class="asset-icon">${cryptoIcons[item.iconKey]}</div>
@@ -734,6 +817,51 @@
             setWaitState(pairId);
         }
     });
+
+    /* ⏱️ ປັບປ່ຽນ Offset ເວລາ +/- */
+    function adjustOffset(pairId, delta) {
+        if (!cardTimers[pairId]) return;
+        cardTimers[pairId].offset += delta;
+        const currentOffset = cardTimers[pairId].offset;
+        
+        // ອັບເດດຂໍ້ຄວາມສະແດງ Sync
+        const syncValEl = document.getElementById(`sync-val-${pairId}`);
+        if (syncValEl) {
+            syncValEl.innerText = `${currentOffset > 0 ? '+' : ''}${currentOffset}s`;
+        }
+
+        // ອັບເດດ Timer & Phase ທັນທີ
+        const { timeLeft, phase } = calculatePhaseAndTimer(currentOffset);
+        cardTimers[pairId].timeLeft = timeLeft;
+        cardTimers[pairId].phase = phase;
+
+        const timerEl = document.getElementById(`timer-${pairId}`);
+        if (timerEl) timerEl.innerText = timeLeft + 's';
+
+        document.getElementById(`phase-${pairId}`).innerText = phase === 'signal' ? 'SIGNAL' : (phase === 'countdown' ? 'ANALYZING' : 'WAITING');
+
+        if (phase === 'signal') setSignalState(pairId);
+        else if (phase === 'countdown') setCountdownState(pairId);
+        else setWaitState(pairId);
+    }
+
+    /* 💾 ບັນທຶກຄ່າ Offset ລົງ LocalStorage */
+    function saveOffset(pairId) {
+        if (!cardTimers[pairId]) return;
+        const offsetToSave = cardTimers[pairId].offset;
+        localStorage.setItem(`sync_offset_${pairId}`, offsetToSave);
+        
+        const saveBtn = document.querySelector(`#card-${pairId} .save-btn`);
+        if (saveBtn) {
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = '✅ Saved';
+            saveBtn.style.background = '#00bfff';
+            setTimeout(() => {
+                saveBtn.innerText = originalText;
+                saveBtn.style.background = '#0ecb81';
+            }, 1500);
+        }
+    }
 
     function changeTimeframe(pairId, symbol, timeframe, btnEl) {
         selectedTimeframes[pairId] = timeframe;
