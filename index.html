@@ -155,10 +155,17 @@
             margin-bottom: 15px;
         }
 
-        .fullscreen-btn {
+        /* Header Action Controls (Fullscreen & Setting) */
+        .card-top-controls {
             position: absolute;
             top: 10px;
             right: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .action-btn-top {
             background: var(--box-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -166,10 +173,9 @@
             padding: 4px 8px;
             font-size: 0.8rem;
             cursor: pointer;
-            z-index: 10;
             transition: all 0.2s ease;
         }
-        .fullscreen-btn:hover {
+        .action-btn-top:hover {
             background: #f0b90b;
             color: #0b0e11;
         }
@@ -177,11 +183,11 @@
         /* Timeframe Selector Buttons */
         .tf-container {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 6px;
             width: 100%;
             margin-bottom: 8px;
-            padding-right: 30px; /* space for fullscreen button */
+            padding-right: 110px; /* space for top right buttons */
         }
         .tf-btn {
             background: var(--box-bg);
@@ -471,9 +477,9 @@
             color: var(--text-color);
         }
 
-        /* ⏱️ Sync Time Controls */
+        /* ⏱️ Sync Time Controls (ກໍານົດ display: none ເພື່ອຊ່ອນໄວ້ກ່ອນ) */
         .sync-controls {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: space-between;
             background: var(--box-bg);
@@ -627,6 +633,17 @@
         refreshBinanceData();
     }
 
+    /* ⚙️ Function ເປີດ/ຊ່ອນ ແຖບປັບເວລາ */
+    function toggleSyncControl(pairId) {
+        const syncEl = document.getElementById(`sync-controls-${pairId}`);
+        if (!syncEl) return;
+        if (syncEl.style.display === 'none' || syncEl.style.display === '') {
+            syncEl.style.display = 'flex';
+        } else {
+            syncEl.style.display = 'none';
+        }
+    }
+
     /* 🖥️ Function ຢ່າງເຕັມໜ້າຈໍ / ອອກຈາກເຕັມໜ້າຈໍ */
     function toggleFullScreen(pairId, btn) {
         const card = document.getElementById(`card-${pairId}`);
@@ -672,16 +689,16 @@
     ];
 
     const defaultOffsets = {
-        'pair-0': 25,  // BTC/USDT
-        'pair-1': 19,  // ETH/USDT
-        'pair-2': 0,   // BNB/USDT
-        'pair-3': -6,  // SOL/USDT
-        'pair-4': -16, // TRX/USDT
-        'pair-5': -11, // SUI/USDT
-        'pair-6': -51, // DOGE/USDT
-        'pair-7': 4,   // XRP/USDT
-        'pair-8': 28,  // GOLD/USDT
-        'pair-9': 25   // SILVER/USDT
+        'pair-0': 24,  // BTC/USDT
+        'pair-1': 17,  // ETH/USDT
+        'pair-2': -2,   // BNB/USDT
+        'pair-3': -7,  // SOL/USDT
+        'pair-4': -17, // TRX/USDT
+        'pair-5': -12, // SUI/USDT
+        'pair-6': -52, // DOGE/USDT
+        'pair-7': 2,   // XRP/USDT
+        'pair-8': 13,  // GOLD/USDT
+        'pair-9': 38   // SILVER/USDT
     };
 
     const selectedTimeframes = {};
@@ -745,7 +762,11 @@
 
         const cardHtml = `
             <div class="app-card" id="card-${pairId}">
-                <button class="fullscreen-btn" onclick="toggleFullScreen('${pairId}', this)">🖥️ Full</button>
+                <div class="card-top-controls">
+                    <button class="action-btn-top" onclick="toggleSyncControl('${pairId}')">⚙️ Setting</button>
+                    <button class="action-btn-top" onclick="toggleFullScreen('${pairId}', this)">🖥️ Full</button>
+                </div>
+
                 <div class="tf-container">${tfButtonsHtml}</div>
                 <div class="chart-container"><canvas id="canvas-${pairId}"></canvas></div>
 
@@ -784,8 +805,8 @@
                     </div>
                 </div>
 
-                <!-- ⏱️ Sync Time Control Bar -->
-                <div class="sync-controls">
+                <!-- ⏱️ Sync Time Control Bar (ຈະຊ່ອນໄວ້ກ່ອນ) -->
+                <div class="sync-controls" id="sync-controls-${pairId}">
                     <span class="sync-label">Sync Time:</span>
                     <div class="sync-btn-group">
                         <button class="sync-btn" onclick="adjustOffset('${pairId}', -1)">-</button>
