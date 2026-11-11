@@ -44,6 +44,97 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        /* 🔒 Login Overlay Styling */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 14, 17, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background: var(--card-bg);
+            border: 2px solid #f0b90b;
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f0b90b;
+            margin-bottom: 20px;
+        }
+        .login-input {
+            width: 100%;
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .login-input:focus {
+            border-color: #f0b90b;
+        }
+        .login-btn {
+            width: 100%;
+            background: #f0b90b;
+            color: #0b0e11;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .login-btn:hover {
+            background: #d4a305;
+            transform: scale(1.02);
+        }
+        .login-error {
+            color: #f6465d;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        /* 🔘 ປຸ່ມ Logout */
+        .logout-btn {
+            position: fixed;
+            top: 15px;
+            right: 140px;
+            z-index: 1000;
+            background: var(--card-bg);
+            color: #f6465d;
+            border: 2px solid #f6465d;
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: none;
+        }
+        .logout-btn:hover {
+            background: #f6465d;
+            color: #fff;
+        }
+
         /* 🔘 ປຸ່ມສະຫຼັບ Theme (ດຳ - ຂາວ) */
         .theme-toggle-btn {
             position: fixed;
@@ -477,7 +568,7 @@
             color: var(--text-color);
         }
 
-        /* ⏱️ Sync Time Controls (ກໍານົດ display: none ເພື່ອຊ່ອນໄວ້ກ່ອນ) */
+        /* ⏱️ Sync Time Controls */
         .sync-controls {
             display: none;
             align-items: center;
@@ -612,6 +703,20 @@
 </head>
 <body>
 
+<!-- 🔒 Login Overlay -->
+<div id="login-overlay">
+    <div class="login-card">
+        <div class="login-title">⚡ SNIPER SIGNAL ⚡</div>
+        <input type="text" id="username" class="login-input" placeholder="Username ()">
+        <input type="password" id="password" class="login-input" placeholder="Password ()">
+        <button class="login-btn" onclick="handleLogin()">ເຂົ້າສູ່ລະບົບ</button>
+        <div class="login-error" id="login-error"></div>
+    </div>
+</div>
+
+<!-- 🔘 ປຸ່ມ Logout -->
+<button class="logout-btn" id="logoutBtn" onclick="handleLogout()">🚪 Logout</button>
+
 <!-- 🔘 ປຸ່ມສະຫຼັບໂໝດ ຂາວ - ດຳ -->
 <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">☀️ Light Mode</button>
 
@@ -620,6 +725,42 @@
 <div class="grid-container" id="cards-container"></div>
 
 <script>
+    /* 🔒 Check Login Status On Load */
+    window.addEventListener('DOMContentLoaded', () => {
+        const isLoggedIn = localStorage.getItem('sniper_logged_in');
+        if (isLoggedIn === 'true') {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+    });
+
+    function handleLogin() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        const errorEl = document.getElementById('login-error');
+
+        if (user === 'sniper777' && pass === '8970') {
+            localStorage.setItem('sniper_logged_in', 'true');
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'block';
+            errorEl.innerText = '';
+        } else {
+            errorEl.innerText = '⚠️ Username ຫຼື Password ບໍ່ຖືກຕ້ອງ!';
+        }
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('sniper_logged_in');
+        location.reload();
+    }
+
+    // ກົດ Enter ເພື່ອ Login ໄດ້ເລີຍ
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.getElementById('login-overlay').style.display !== 'none') {
+            handleLogin();
+        }
+    });
+
     function toggleTheme() {
         const body = document.body;
         const btn = document.getElementById('themeBtn');
@@ -655,7 +796,6 @@
             btn.innerText = '🖥️ Full';
         }
 
-        // ວາດກາຟໃໝ່ໃຫ້ພໍດີກັບຂະໜາດຈໍໃໝ່
         const config = pairsConfig.find(p => p.pairId === pairId);
         if (config) {
             fetchBinanceKlines(pairId, config.symbol);
@@ -731,7 +871,6 @@
         return { timeLeft, phase };
     }
 
-    /* 💾 ດຶງຄ່າ Offset ຈາກ LocalStorage ຫຼືໃຊ້ຄ່າ Default */
     function getSavedOffset(pairId) {
         const saved = localStorage.getItem(`sync_offset_${pairId}`);
         if (saved !== null) {
@@ -805,7 +944,6 @@
                     </div>
                 </div>
 
-                <!-- ⏱️ Sync Time Control Bar (ຈະຊ່ອນໄວ້ກ່ອນ) -->
                 <div class="sync-controls" id="sync-controls-${pairId}">
                     <span class="sync-label">Sync Time:</span>
                     <div class="sync-btn-group">
@@ -839,19 +977,16 @@
         }
     });
 
-    /* ⏱️ ປັບປ່ຽນ Offset ເວລາ +/- */
     function adjustOffset(pairId, delta) {
         if (!cardTimers[pairId]) return;
         cardTimers[pairId].offset += delta;
         const currentOffset = cardTimers[pairId].offset;
         
-        // ອັບເດດຂໍ້ຄວາມສະແດງ Sync
         const syncValEl = document.getElementById(`sync-val-${pairId}`);
         if (syncValEl) {
             syncValEl.innerText = `${currentOffset > 0 ? '+' : ''}${currentOffset}s`;
         }
 
-        // ອັບເດດ Timer & Phase ທັນທີ
         const { timeLeft, phase } = calculatePhaseAndTimer(currentOffset);
         cardTimers[pairId].timeLeft = timeLeft;
         cardTimers[pairId].phase = phase;
@@ -866,7 +1001,6 @@
         else setWaitState(pairId);
     }
 
-    /* 💾 ບັນທຶກຄ່າ Offset ລົງ LocalStorage */
     function saveOffset(pairId) {
         if (!cardTimers[pairId]) return;
         const offsetToSave = cardTimers[pairId].offset;
@@ -1115,7 +1249,6 @@
         });
     }, 1000);
 
-    // ປັບຂະໜາດ chart ຖ້າມີການປ່ຽນຂະໜາດ window
     window.onresize = () => {
         refreshBinanceData();
     };
